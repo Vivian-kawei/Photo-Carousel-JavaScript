@@ -8,9 +8,19 @@
 		this.posterItemMain=poster.find("ul.poster-list");
 		this.nextBtn = poster.find("div.poster-next-btn");
 		this.prevBtn = poster.find("div.poster-prev-btn");
-		this.posterFirstItem = this.posterItemMain.find("li").eq(0);
 		this.posterItems=poster.find("li.poster-item");
+		//当图片数为偶数时，克隆第一张图片添加到ul中
+		if(this.posterItems.size()%2==0){
+				//jQ append() 方法在被选元素的结尾（仍然在内部）插入指定内容。
+				this.posterItemMain.append(this.posterItems.eq(0).clone());
+				this.posterItems = this.posterItemMain.children();
+			};
+		//重新在获取一次li
+		this.posterItems=poster.find("li.poster-item");
+		this.posterFirstItem = this.posterItemMain.find("li").eq(0);
 		this.posterLastItem=this.posterItems.last();
+		//标识 用来判断是否完成切换动画
+		this.rotateFlag=true;
 		
 		//设置默认参数
 		this.setting={
@@ -19,7 +29,9 @@
 			"posterWidth":640,			//幻灯片第一帧的宽度
 			"posterHeight":270,			//幻灯片第一帧的高度
 			"scale":0.9,				//幻灯片显示比例
-			"speed":500,				//幻灯片
+			"speed":500,				//幻灯片切换速度
+			"autoPlay":true,			//是否自动播放	
+			"delay":1000,				//自动播放时间间隔
 			"verticalAign":"middle"		//bottom top
 		};
 		//extend(dest,src1,src2,src3...);
@@ -31,16 +43,47 @@
 		this.setSettingValue();
 		this.setPosterPos();
 		//要先保存好self 不可以直接用this
+		//左旋转按钮
 		this.nextBtn.click(function(){
-			self.carouselRotate("left");
+			if(self.rotateFlag){
+				self.rotateFlag=false;
+				self.carouselRotate("left");		
+			}
 		});
+		//右旋转按钮
 		this.prevBtn.click(function(){
-			self.carouselRotate("right");
+			if(self.rotateFlag){
+				self.rotateFlag=false;
+				self.carouselRotate("right");				
+			}
 		});
+		//是否自动播放
+		if(this.setting.autoPlay){
+			this.autoPlay();
+			//当鼠标focus on 时停止自动播放 jQ hover()方法
+			this.poster.hover(function(){
+				//清除自动播放
+				//clearInterval() 方法可取消由 setInterval() 设置的 timeout。
+				window.clearInterval(self.timer);
+			},function(){
+				self.autoPlay();
+			});
+		}
 	};
 
 
 	Carousel.prototype={
+		//自动播放
+		autoPlay:function(){
+			var self = this;
+			//setInterval() 方法可按照指定的周期（以毫秒计）来调用函数或计算表达式。
+			//setInterval() 方法会不停地调用函数，直到 clearInterval() 被调用或窗口被关闭。
+			//定义timer 用于当鼠标focus on 时停止自动播放
+			this.timer=window.setInterval(function(){
+				self.nextBtn.click();
+			},this.setting.delay);
+		},
+
 		carouselRotate:function(dir){
 			var _this_  = this;
 			var zIndexArr = [];//保存zindex
